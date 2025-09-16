@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import Cart from './Cart';
 
 interface Product {
   id: number;
@@ -109,6 +110,7 @@ export default function Index() {
   const [cart, setCart] = useState<{ [key: number]: number }>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('Все');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCart, setShowCart] = useState(false);
 
   const categories = ['Все', 'Одежда', 'Аксессуары', 'Текстиль'];
 
@@ -144,6 +146,16 @@ export default function Index() {
     ));
   };
 
+  if (showCart) {
+    return (
+      <Cart 
+        cart={cart} 
+        onUpdateCart={setCart} 
+        onGoBack={() => setShowCart(false)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background font-opensans">
       {/* Header */}
@@ -173,7 +185,11 @@ export default function Index() {
 
             {/* Cart & Mobile Menu Button */}
             <div className="flex items-center gap-4">
-              <Button variant="outline" className="relative">
+              <Button 
+                variant="outline" 
+                className="relative"
+                onClick={() => setShowCart(true)}
+              >
                 <Icon name="ShoppingCart" size={20} />
                 {getTotalItems() > 0 && (
                   <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
