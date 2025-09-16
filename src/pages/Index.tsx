@@ -56,6 +56,25 @@ const products: Product[] = [
     category: "Текстиль",
     rating: 4.7,
     reviews: 31
+  },
+  {
+    id: 4,
+    name: "Шелковая блузка",
+    price: 9990,
+    image: "/img/87c0a3ac-2d39-42a4-b90b-1b5364b49d85.jpg",
+    category: "Одежда",
+    rating: 4.6,
+    reviews: 15,
+    isNew: true
+  },
+  {
+    id: 5,
+    name: "Золотые серьги",
+    price: 6490,
+    image: "/img/0d50317a-cd94-4227-9cec-42328dac24a0.jpg",
+    category: "Аксессуары",
+    rating: 4.9,
+    reviews: 27
   }
 ];
 
@@ -106,6 +125,12 @@ export default function Index() {
 
   const getTotalItems = () => {
     return Object.values(cart).reduce((sum, count) => sum + count, 0);
+  };
+
+  const getRecommendations = (currentProductId: number, category: string) => {
+    return products
+      .filter(product => product.id !== currentProductId && product.category === category)
+      .slice(0, 2);
   };
 
   const renderStars = (rating: number) => {
@@ -303,12 +328,49 @@ export default function Index() {
                 
                 <CardFooter className="p-6 pt-0">
                   <Button 
-                    className="w-full" 
+                    className="w-full mb-4" 
                     onClick={() => addToCart(product.id)}
                   >
                     <Icon name="ShoppingCart" size={16} className="mr-2" />
                     В корзину
                   </Button>
+                  
+                  {/* Recommendations */}
+                  {getRecommendations(product.id, product.category).length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold text-muted-foreground mb-3">
+                        Вам может понравиться
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {getRecommendations(product.id, product.category).map(rec => (
+                          <div key={rec.id} className="group cursor-pointer">
+                            <div className="relative overflow-hidden rounded-md mb-2">
+                              <img
+                                src={rec.image}
+                                alt={rec.name}
+                                className="w-full h-20 object-cover group-hover:scale-105 transition-transform duration-200"
+                              />
+                              {rec.isNew && (
+                                <Badge className="absolute top-1 left-1 text-xs h-5 bg-green-600">Новинка</Badge>
+                              )}
+                            </div>
+                            <h5 className="text-xs font-medium text-foreground truncate mb-1">
+                              {rec.name}
+                            </h5>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-primary">
+                                {rec.price.toLocaleString()} ₽
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <Icon name="Star" size={10} className="text-yellow-400 fill-current" />
+                                <span className="text-xs text-muted-foreground">{rec.rating}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardFooter>
               </Card>
             ))}
