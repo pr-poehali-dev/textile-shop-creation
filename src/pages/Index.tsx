@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 import Cart from './Cart';
 import ProductDetail from './ProductDetail';
@@ -113,12 +117,34 @@ export default function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 20000]);
+  const [showNewOnly, setShowNewOnly] = useState(false);
+  const [showSaleOnly, setShowSaleOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const categories = ['Все', 'Одежда', 'Аксессуары', 'Текстиль'];
 
-  const filteredProducts = selectedCategory === 'Все' 
-    ? products 
-    : products.filter(product => product.category === selectedCategory);
+  const filteredProducts = products.filter(product => {
+    // Фильтр по категории
+    const categoryMatch = selectedCategory === 'Все' || product.category === selectedCategory;
+    
+    // Фильтр по поиску
+    const searchMatch = searchQuery === '' || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Фильтр по цене
+    const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
+    
+    // Фильтр по новинкам
+    const newMatch = !showNewOnly || product.isNew;
+    
+    // Фильтр по скидкам
+    const saleMatch = !showSaleOnly || product.isSale;
+    
+    return categoryMatch && searchMatch && priceMatch && newMatch && saleMatch;
+  });
 
   const addToCart = (productId: number) => {
     setCart(prev => ({
@@ -298,10 +324,110 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Category Filter */}
+      {/* Search and Filters */}
       <section id="catalog" className="py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-4 justify-center mb-12">
+          {/* Search Bar */}
+          <div className="mb-8">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              <div className="relative flex-1 max-w-md">
+                <Icon name="Search" size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Поиск товаров..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Icon name="Filter" size={16} />
+                Фильтры
+                {(showNewOnly || showSaleOnly || priceRange[0] > 0 || priceRange[1] < 20000) && (
+                  <Badge className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                    !
+                  </Badge>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Advanced Filters */}
+          {showFilters && (
+            <Card className="mb-8 animate-fade-in">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Price Range */}
+                  <div>
+                    <h3 className="font-semibold mb-4">Цена: {priceRange[0].toLocaleString()} - {priceRange[1].toLocaleString()} ₽</h3>
+                    <Slider
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      max={20000}
+                      min={0}
+                      step={500}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                      <span>0 ₽</span>
+                      <span>20 000 ₽</span>
+                    </div>
+                  </div>
+
+                  {/* Special Filters */}
+                  <div>
+                    <h3 className="font-semibold mb-4">Особые предложения</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="new-items"
+                          checked={showNewOnly}
+                          onCheckedChange={setShowNewOnly}
+                        />
+                        <label htmlFor="new-items" className="text-sm cursor-pointer">
+                          Только новинки
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="sale-items"
+                          checked={showSaleOnly}
+                          onCheckedChange={setShowSaleOnly}
+                        />
+                        <label htmlFor="sale-items" className="text-sm cursor-pointer">
+                          Только скидки
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reset Filters */}
+                  <div className="flex items-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setPriceRange([0, 20000]);
+                        setShowNewOnly(false);
+                        setShowSaleOnly(false);
+                        setSelectedCategory('Все');
+                      }}
+                      className="w-full"
+                    >
+                      <Icon name="RotateCcw" size={16} className="mr-2" />
+                      Очистить фильтры
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Category Filter */}
+          <div className="flex flex-wrap gap-4 justify-center mb-8">
             {categories.map(category => (
               <Button
                 key={category}
@@ -314,8 +440,34 @@ export default function Index() {
             ))}
           </div>
 
+          {/* Results Count */}
+          <div className="mb-6">
+            <p className="text-muted-foreground">
+              Найдено {filteredProducts.length} товаров
+              {searchQuery && ` по запросу "${searchQuery}"`}
+            </p>
+          </div>
+
           {/* Products Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-16">
+              <Icon name="Search" size={64} className="mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Товары не найдены</h3>
+              <p className="text-muted-foreground mb-6">Попробуйте изменить параметры поиска</p>
+              <Button 
+                onClick={() => {
+                  setSearchQuery('');
+                  setPriceRange([0, 20000]);
+                  setShowNewOnly(false);
+                  setShowSaleOnly(false);
+                  setSelectedCategory('Все');
+                }}
+              >
+                Очистить фильтры
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProducts.map(product => (
               <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 animate-fade-in">
                 <div 
