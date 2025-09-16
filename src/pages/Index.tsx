@@ -89,6 +89,7 @@ const reviews: Review[] = [
 export default function Index() {
   const [cart, setCart] = useState<{ [key: number]: number }>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('Все');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const categories = ['Все', 'Одежда', 'Аксессуары', 'Текстиль'];
 
@@ -134,7 +135,7 @@ export default function Index() {
               <h1 className="ml-3 text-2xl font-bold font-montserrat text-foreground">FC Fashion Store</h1>
             </div>
 
-            {/* Navigation */}
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
               <a href="#" className="text-foreground hover:text-primary transition-colors">Главная</a>
               <a href="#catalog" className="text-foreground hover:text-primary transition-colors">Каталог</a>
@@ -145,8 +146,8 @@ export default function Index() {
               <a href="#" className="text-foreground hover:text-primary transition-colors">Доставка</a>
             </nav>
 
-            {/* Cart */}
-            <div className="flex items-center">
+            {/* Cart & Mobile Menu Button */}
+            <div className="flex items-center gap-4">
               <Button variant="outline" className="relative">
                 <Icon name="ShoppingCart" size={20} />
                 {getTotalItems() > 0 && (
@@ -155,18 +156,85 @@ export default function Index() {
                   </Badge>
                 )}
               </Button>
+              
+              {/* Mobile Menu Button */}
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                <Icon name={isMobileMenuOpen ? "X" : "Menu"} size={20} />
+              </Button>
             </div>
           </div>
         </div>
+        
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-t animate-fade-in">
+            <nav className="px-4 py-4 space-y-4">
+              <a 
+                href="#" 
+                className="block text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Главная
+              </a>
+              <a 
+                href="#catalog" 
+                className="block text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Каталог
+              </a>
+              <a 
+                href="#" 
+                className="block text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Одежда
+              </a>
+              <a 
+                href="#" 
+                className="block text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Аксессуары
+              </a>
+              <a 
+                href="#" 
+                className="block text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Текстиль
+              </a>
+              <a 
+                href="#" 
+                className="block text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Контакты
+              </a>
+              <a 
+                href="#" 
+                className="block text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Доставка
+              </a>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-secondary to-background py-20">
+      <section className="bg-gradient-to-r from-secondary to-background py-12 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold font-montserrat text-foreground mb-6">
+          <h2 className="text-3xl md:text-4xl lg:text-6xl font-bold font-montserrat text-foreground mb-6">
             Изысканный стиль
           </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto px-4">
             Откройте для себя коллекцию качественной одежды, аксессуаров и текстиля
           </p>
           <Button size="lg" className="text-lg px-8">
@@ -177,7 +245,7 @@ export default function Index() {
       </section>
 
       {/* Category Filter */}
-      <section id="catalog" className="py-12">
+      <section id="catalog" className="py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap gap-4 justify-center mb-12">
             {categories.map(category => (
