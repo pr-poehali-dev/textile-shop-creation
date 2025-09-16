@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import Cart from './Cart';
+import ProductDetail from './ProductDetail';
 
 interface Product {
   id: number;
@@ -111,6 +112,7 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Все');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showCart, setShowCart] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 
   const categories = ['Все', 'Одежда', 'Аксессуары', 'Текстиль'];
 
@@ -145,6 +147,17 @@ export default function Index() {
       />
     ));
   };
+
+  if (selectedProductId) {
+    return (
+      <ProductDetail 
+        productId={selectedProductId}
+        onGoBack={() => setSelectedProductId(null)}
+        onAddToCart={addToCart}
+        cart={cart}
+      />
+    );
+  }
 
   if (showCart) {
     return (
@@ -305,7 +318,10 @@ export default function Index() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProducts.map(product => (
               <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 animate-fade-in">
-                <div className="relative overflow-hidden rounded-t-lg">
+                <div 
+                  className="relative overflow-hidden rounded-t-lg cursor-pointer"
+                  onClick={() => setSelectedProductId(product.id)}
+                >
                   <img
                     src={product.image}
                     alt={product.name}
@@ -327,7 +343,12 @@ export default function Index() {
                     </span>
                   </div>
                   
-                  <h3 className="text-lg font-semibold font-montserrat mb-2">{product.name}</h3>
+                  <h3 
+                    className="text-lg font-semibold font-montserrat mb-2 cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => setSelectedProductId(product.id)}
+                  >
+                    {product.name}
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-4">{product.category}</p>
                   
                   <div className="flex items-center gap-2">
@@ -359,7 +380,11 @@ export default function Index() {
                       </h4>
                       <div className="grid grid-cols-2 gap-2">
                         {getRecommendations(product.id, product.category).map(rec => (
-                          <div key={rec.id} className="group cursor-pointer">
+                          <div 
+                            key={rec.id} 
+                            className="group cursor-pointer"
+                            onClick={() => setSelectedProductId(rec.id)}
+                          >
                             <div className="relative overflow-hidden rounded-md mb-2">
                               <img
                                 src={rec.image}
@@ -370,7 +395,7 @@ export default function Index() {
                                 <Badge className="absolute top-1 left-1 text-xs h-5 bg-green-600">Новинка</Badge>
                               )}
                             </div>
-                            <h5 className="text-xs font-medium text-foreground truncate mb-1">
+                            <h5 className="text-xs font-medium text-foreground truncate mb-1 hover:text-primary transition-colors">
                               {rec.name}
                             </h5>
                             <div className="flex items-center justify-between">
