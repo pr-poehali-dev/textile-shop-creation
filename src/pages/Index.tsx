@@ -98,7 +98,7 @@ const reviews: Review[] = [
     productId: 2,
     name: "Мария С.",
     rating: 5,
-    comment: "Очень довольна покупкой. Кожа мягкая, качество отличное.",
+    comment: "Сумка превзошла все ожидания. Очень довольна покупкой!",
     date: "12 сентября 2024"
   },
   {
@@ -106,45 +106,24 @@ const reviews: Review[] = [
     productId: 3,
     name: "Елена В.",
     rating: 4,
-    comment: "Шарф очень мягкий и теплый. Рекомендую!",
+    comment: "Мягкий и теплый шарф, отличное качество кашемира.",
     date: "10 сентября 2024"
   }
 ];
 
-export default function Index() {
+function Index() {
   const [cart, setCart] = useState<{ [key: number]: number }>({});
-  const [selectedCategory, setSelectedCategory] = useState<string>('Все');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState([0, 20000]);
   const [showNewOnly, setShowNewOnly] = useState(false);
   const [showSaleOnly, setShowSaleOnly] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('Все');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const categories = ['Все', 'Одежда', 'Аксессуары', 'Текстиль'];
-
-  const filteredProducts = products.filter(product => {
-    // Фильтр по категории
-    const categoryMatch = selectedCategory === 'Все' || product.category === selectedCategory;
-    
-    // Фильтр по поиску
-    const searchMatch = searchQuery === '' || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Фильтр по цене
-    const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
-    
-    // Фильтр по новинкам
-    const newMatch = !showNewOnly || product.isNew;
-    
-    // Фильтр по скидкам
-    const saleMatch = !showSaleOnly || product.isSale;
-    
-    return categoryMatch && searchMatch && priceMatch && newMatch && saleMatch;
-  });
 
   const addToCart = (productId: number) => {
     setCart(prev => ({
@@ -154,49 +133,85 @@ export default function Index() {
   };
 
   const getTotalItems = () => {
-    return Object.values(cart).reduce((sum, count) => sum + count, 0);
-  };
-
-  const getRecommendations = (currentProductId: number, category: string) => {
-    return products
-      .filter(product => product.id !== currentProductId && product.category === category)
-      .slice(0, 2);
+    return Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
   };
 
   const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Icon
-        key={i}
-        name="Star"
-        size={16}
-        className={i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}
-      />
-    ));
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <Icon key={i} name="Star" size={16} className="text-yellow-400 fill-current" />
+      );
+    }
+
+    if (hasHalfStar) {
+      stars.push(
+        <Icon key="half" name="StarHalf" size={16} className="text-yellow-400 fill-current" />
+      );
+    }
+
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <Icon key={`empty-${i}`} name="Star" size={16} className="text-gray-300" />
+      );
+    }
+
+    return stars;
   };
 
-  if (selectedProductId) {
-    return (
-      <ProductDetail 
-        productId={selectedProductId}
-        onGoBack={() => setSelectedProductId(null)}
-        onAddToCart={addToCart}
-        cart={cart}
-      />
-    );
-  }
+  const getRandomRecommendations = (currentProductId: number, count: number = 3) => {
+    const otherProducts = products.filter(p => p.id !== currentProductId);
+    const shuffled = [...otherProducts].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  };
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+    const matchesNew = !showNewOnly || product.isNew;
+    const matchesSale = !showSaleOnly || product.isSale;
+    const matchesCategory = selectedCategory === 'Все' || product.category === selectedCategory;
+
+    return matchesSearch && matchesPrice && matchesNew && matchesSale && matchesCategory;
+  });
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (priceRange[0] > 0 || priceRange[1] < 20000) count++;
+    if (showNewOnly) count++;
+    if (showSaleOnly) count++;
+    if (selectedCategory !== 'Все') count++;
+    return count;
+  };
 
   if (showCart) {
     return (
       <Cart 
         cart={cart} 
         onUpdateCart={setCart} 
-        onGoBack={() => setShowCart(false)}
+        onGoBack={() => setShowCart(false)} 
+      />
+    );
+  }
+
+  if (selectedProductId) {
+    return (
+      <ProductDetail 
+        productId={selectedProductId} 
+        onGoBack={() => setSelectedProductId(null)} 
+        onAddToCart={addToCart}
+        cart={cart}
       />
     );
   }
 
   return (
-    <div className="min-h-screen bg-background font-opensans">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -248,138 +263,104 @@ export default function Index() {
               </Button>
             </div>
           </div>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden py-4 border-t">
+              <nav className="flex flex-col space-y-4">
+                <a href="#" className="text-foreground hover:text-primary transition-colors">Главная</a>
+                <a href="#catalog" className="text-foreground hover:text-primary transition-colors">Каталог</a>
+                <a href="#" className="text-foreground hover:text-primary transition-colors">Одежда</a>
+                <a href="#" className="text-foreground hover:text-primary transition-colors">Аксессуары</a>
+                <a href="#" className="text-foreground hover:text-primary transition-colors">Текстиль</a>
+                <a href="#" className="text-foreground hover:text-primary transition-colors">Контакты</a>
+                <a href="#" className="text-foreground hover:text-primary transition-colors">Доставка</a>
+              </nav>
+            </div>
+          )}
         </div>
-        
-        {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t animate-fade-in">
-            <nav className="px-4 py-4 space-y-4">
-              <a 
-                href="#" 
-                className="block text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Главная
-              </a>
-              <a 
-                href="#catalog" 
-                className="block text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Каталог
-              </a>
-              <a 
-                href="#" 
-                className="block text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Одежда
-              </a>
-              <a 
-                href="#" 
-                className="block text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Аксессуары
-              </a>
-              <a 
-                href="#" 
-                className="block text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Текстиль
-              </a>
-              <a 
-                href="#" 
-                className="block text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Контакты
-              </a>
-              <a 
-                href="#" 
-                className="block text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Доставка
-              </a>
-            </nav>
-          </div>
-        )}
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-secondary to-background py-12 md:py-20">
+      <section className="relative bg-gradient-to-r from-primary/10 to-secondary/10 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-6xl font-bold font-montserrat text-foreground mb-6">
-            Изысканный стиль
+          <h2 className="text-5xl font-bold font-montserrat text-foreground mb-6">
+            Добро пожаловать в FC Fashion Store
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto px-4">
-            Откройте для себя коллекцию качественной одежды, аксессуаров и текстиля
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+            Откройте для себя эксклюзивную коллекцию модной одежды, аксессуаров и текстиля. 
+            Качество, стиль и комфорт в каждом изделии.
           </p>
-          <Button size="lg" className="text-lg px-8">
-            Смотреть каталог
-            <Icon name="ArrowRight" size={20} className="ml-2" />
+          <Button 
+            size="lg" 
+            className="text-lg px-8 py-6"
+            onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            Посмотреть каталог
+            <Icon name="ArrowDown" size={20} className="ml-2" />
           </Button>
         </div>
       </section>
 
       {/* Search and Filters */}
-      <section id="catalog" className="py-8 md:py-12">
+      <section id="catalog" className="py-12 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold font-montserrat text-center mb-8">Наш каталог</h2>
+          
           {/* Search Bar */}
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="relative flex-1 max-w-md">
-                <Icon name="Search" size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Поиск товаров..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
-              >
-                <Icon name="Filter" size={16} />
-                Фильтры
-                {(showNewOnly || showSaleOnly || priceRange[0] > 0 || priceRange[1] < 20000) && (
-                  <Badge className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                    !
-                  </Badge>
-                )}
-              </Button>
+          <div className="max-w-md mx-auto mb-6">
+            <div className="relative">
+              <Icon name="Search" size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Поиск товаров..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 text-base"
+              />
             </div>
           </div>
 
+          {/* Filter Toggle Button */}
+          <div className="flex justify-center mb-6">
+            <Button
+              variant="outline"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="relative"
+            >
+              <Icon name="Filter" size={16} className="mr-2" />
+              Фильтры
+              {getActiveFiltersCount() > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                  {getActiveFiltersCount()}
+                </Badge>
+              )}
+            </Button>
+          </div>
+
           {/* Advanced Filters */}
-          {showFilters && (
-            <Card className="mb-8 animate-fade-in">
+          {showAdvancedFilters && (
+            <Card className="max-w-4xl mx-auto mb-8">
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {/* Price Range */}
                   <div>
-                    <h3 className="font-semibold mb-4">Цена: {priceRange[0].toLocaleString()} - {priceRange[1].toLocaleString()} ₽</h3>
+                    <label className="text-sm font-medium mb-3 block">
+                      Цена: {priceRange[0].toLocaleString()} - {priceRange[1].toLocaleString()} ₽
+                    </label>
                     <Slider
                       value={priceRange}
                       onValueChange={setPriceRange}
                       max={20000}
                       min={0}
-                      step={500}
-                      className="w-full"
+                      step={100}
+                      className="mt-2"
                     />
-                    <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                      <span>0 ₽</span>
-                      <span>20 000 ₽</span>
-                    </div>
                   </div>
 
-                  {/* Special Filters */}
+                  {/* New Items Filter */}
                   <div>
-                    <h3 className="font-semibold mb-4">Особые предложения</h3>
+                    <label className="text-sm font-medium mb-3 block">Особенности</label>
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -427,34 +408,40 @@ export default function Index() {
           )}
 
           {/* Category Filter */}
-          <div className="flex flex-wrap gap-4 justify-center mb-8">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             {categories.map(category => (
               <Button
                 key={category}
                 variant={selectedCategory === category ? "default" : "outline"}
                 onClick={() => setSelectedCategory(category)}
-                className="font-montserrat"
+                className="mb-2"
               >
                 {category}
               </Button>
             ))}
           </div>
 
-          {/* Results Count */}
-          <div className="mb-6">
-            <p className="text-muted-foreground">
-              Найдено {filteredProducts.length} товаров
-              {searchQuery && ` по запросу "${searchQuery}"`}
-            </p>
-          </div>
+          {/* Search Results Info */}
+          {(searchQuery || getActiveFiltersCount() > 0) && (
+            <div className="text-center mb-6">
+              <p className="text-muted-foreground">
+                {searchQuery && `Поиск "${searchQuery}": `}
+                Найдено {filteredProducts.length} товаров
+                {getActiveFiltersCount() > 0 && ` (применено фильтров: ${getActiveFiltersCount()})`}
+              </p>
+            </div>
+          )}
 
           {/* Products Grid */}
           {filteredProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <Icon name="Search" size={64} className="mx-auto text-muted-foreground mb-4" />
+            <div className="text-center py-12">
+              <Icon name="Search" size={48} className="mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">Товары не найдены</h3>
-              <p className="text-muted-foreground mb-6">Попробуйте изменить параметры поиска</p>
-              <Button 
+              <p className="text-muted-foreground mb-4">
+                По вашему запросу ничего не найдено. Попробуйте изменить параметры поиска.
+              </p>
+              <Button
+                variant="outline"
                 onClick={() => {
                   setSearchQuery('');
                   setPriceRange([0, 20000]);
@@ -517,7 +504,7 @@ export default function Index() {
                 
                 <CardFooter className="p-6 pt-0">
                   <Button 
-                    className="w-full mb-4" 
+                    className="w-full" 
                     onClick={() => addToCart(product.id)}
                   >
                     <Icon name="ShoppingCart" size={16} className="mr-2" />
@@ -525,28 +512,21 @@ export default function Index() {
                   </Button>
                   
                   {/* Recommendations */}
-                  {getRecommendations(product.id, product.category).length > 0 && (
-                    <div className="border-t pt-4">
-                      <h4 className="text-sm font-semibold text-muted-foreground mb-3">
-                        Вам может понравиться
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {getRecommendations(product.id, product.category).map(rec => (
+                  {getRandomRecommendations(product.id).length > 0 && (
+                    <div className="mt-4 w-full">
+                      <p className="text-xs text-muted-foreground mb-2">Рекомендуем также:</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {getRandomRecommendations(product.id).map(rec => (
                           <div 
-                            key={rec.id} 
-                            className="group cursor-pointer"
+                            key={rec.id}
+                            className="cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={() => setSelectedProductId(rec.id)}
                           >
-                            <div className="relative overflow-hidden rounded-md mb-2">
-                              <img
-                                src={rec.image}
-                                alt={rec.name}
-                                className="w-full h-20 object-cover group-hover:scale-105 transition-transform duration-200"
-                              />
-                              {rec.isNew && (
-                                <Badge className="absolute top-1 left-1 text-xs h-5 bg-green-600">Новинка</Badge>
-                              )}
-                            </div>
+                            <img
+                              src={rec.image}
+                              alt={rec.name}
+                              className="w-full h-16 object-cover rounded"
+                            />
                             <h5 className="text-xs font-medium text-foreground truncate mb-1 hover:text-primary transition-colors">
                               {rec.name}
                             </h5>
@@ -567,7 +547,8 @@ export default function Index() {
                 </CardFooter>
               </Card>
             ))}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -587,7 +568,7 @@ export default function Index() {
                   <p className="text-foreground mb-4 italic">"{review.comment}"</p>
                   
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span className="font-semibold">{review.name}</span>
+                    <span className="font-medium">{review.name}</span>
                     <span>{review.date}</span>
                   </div>
                 </CardContent>
